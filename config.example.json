@@ -1,0 +1,40 @@
+{
+  "watch_paths": [
+    "C:/Users/User/Downloads"
+  ],
+  "poll_interval_seconds": 1.0,
+  "stability_window_seconds": 3.0,
+  "log_level": "INFO",
+  "rules": [
+    {
+      "name": "CNC posts",
+      "enabled": true,
+      "priority": 10,
+      "extensions": [".tap", ".nc"],
+      "name_contains": [],
+      "destination": "C:/TEN10/CNC/Posts",
+      "action": "move",
+      "on_conflict": "rename"
+    },
+    {
+      "name": "CAD models",
+      "enabled": true,
+      "priority": 20,
+      "extensions": [".stl", ".step", ".stp"],
+      "name_contains": [],
+      "destination": "C:/TEN10/CAD/Models",
+      "action": "move",
+      "on_conflict": "rename"
+    },
+    {
+      "name": "Invoices",
+      "enabled": true,
+      "priority": 30,
+      "extensions": [".pdf"],
+      "name_contains": ["invoice", "receipt"],
+      "destination": "C:/TEN10/Docs/Invoices",
+      "action": "move",
+      "on_conflict": "rename"
+    }
+  ]
+}
