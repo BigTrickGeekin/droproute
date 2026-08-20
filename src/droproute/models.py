@@ -6,6 +6,7 @@ from typing import Literal
 
 Action = Literal["move", "copy"]
 ConflictPolicy = Literal["rename", "skip", "overwrite"]
+RouteStatus = Literal["matched", "unmatched", "routed", "failed"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,6 +26,9 @@ class AppConfig:
     watch_paths: tuple[Path, ...]
     poll_interval_seconds: float
     stability_window_seconds: float
+    max_wait_seconds: float
+    process_existing_on_startup: bool
+    worker_count: int
     log_level: str
     rules: tuple[Rule, ...]
 
@@ -34,3 +38,5 @@ class RouteDecision:
     source: Path
     matched_rule: Rule | None
     reason: str
+    status: RouteStatus
+    target: Path | None = None

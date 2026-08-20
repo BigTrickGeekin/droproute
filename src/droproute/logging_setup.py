@@ -4,8 +4,7 @@ import logging
 from pathlib import Path
 
 
-def configure_logging(level: str) -> None:
-    runtime_dir = Path("runtime")
+def configure_logging(level: str, runtime_dir: Path) -> None:
     runtime_dir.mkdir(parents=True, exist_ok=True)
     log_path = runtime_dir / "droproute.log"
 

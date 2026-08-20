@@ -31,7 +31,18 @@ class Router:
             )
         except FileMoveError as exc:
             logger.warning("Routing skipped for %s: %s", source, exc)
-            return RouteDecision(source=source, matched_rule=rule, reason=str(exc))
+            return RouteDecision(
+                source=source,
+                matched_rule=rule,
+                reason=str(exc),
+                status="failed",
+            )
 
         logger.info("Routed %s -> %s using rule '%s'", source, target, rule.name)
-        return RouteDecision(source=target, matched_rule=rule, reason=f"Routed to {target}")
+        return RouteDecision(
+            source=source,
+            matched_rule=rule,
+            reason=f"Routed to {target}",
+            status="routed",
+            target=target,
+        )
