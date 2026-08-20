@@ -4,6 +4,9 @@
   ],
   "poll_interval_seconds": 1.0,
   "stability_window_seconds": 3.0,
+  "max_wait_seconds": 300.0,
+  "process_existing_on_startup": true,
+  "worker_count": 4,
   "log_level": "INFO",
   "rules": [
     {

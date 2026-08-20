@@ -18,8 +18,20 @@ class RuleMatcher:
                 continue
             if rule.extensions and extension not in rule.extensions:
                 continue
-            if rule.name_contains and not all(token in filename_casefold for token in rule.name_contains):
+            if rule.name_contains and not all(
+                token in filename_casefold for token in rule.name_contains
+            ):
                 continue
-            return RouteDecision(source=source, matched_rule=rule, reason=f"Matched rule: {rule.name}")
+            return RouteDecision(
+                source=source,
+                matched_rule=rule,
+                reason=f"Matched rule: {rule.name}",
+                status="matched",
+            )
 
-        return RouteDecision(source=source, matched_rule=None, reason="No matching rule")
+        return RouteDecision(
+            source=source,
+            matched_rule=None,
+            reason="No matching rule",
+            status="unmatched",
+        )

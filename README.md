@@ -1,86 +1,63 @@
 # DropRoute
 
-DropRoute is a focused desktop utility that watches a folder, waits for files to finish downloading, and routes them to target folders based on deterministic rules.
+DropRoute is a focused Windows-friendly utility that watches folders and routes completed files
+using deterministic JSON rules. It is intended for downloads, CNC output, CAD exports, invoices,
+and other local workflows where predictable behavior matters more than AI classification.
 
-## Scope
+## MVP status
 
-This project intentionally stays narrow:
-- watch one or more folders
-- detect when a file is stable and complete
-- match rules by file extension and filename content
-- move or copy files into destination folders
-- avoid accidental overwrites
-- log every decision
+The `0.1.x` MVP supports:
 
-No AI classification. No browser extension. No cloud dependency.
+- one or more non-recursive watch folders
+- startup processing for files that already exist
+- bounded background workers instead of one thread per event
+- download-completion checks with a configurable timeout
+- extension and filename-token matching in priority order
+- move or copy actions
+- `rename`, `skip`, and safe-replacement conflict policies
+- relative paths resolved from the config file location
+- environment variables and `~` in configured paths
+- console and file logging
+- a one-file Windows executable build
 
-## Core design goals
+The MVP deliberately has no GUI, cloud service, browser extension, or AI classifier. Those are not
+required to prove the routing engine.
 
-- reliable with partially written download files
-- simple rule model
-- future-ready package layout
-- low-friction local deployment
-- safe defaults
+## Requirements
 
-## Features in this scaffold
+- Windows 10 or 11 for the primary deployment target
+- Python 3.11 or newer when running from source
 
-- JSON config
-- CLI entrypoint
-- folder watching via `watchdog`
-- stability detection before routing
-- priority-ordered rules
-- extension and substring matching
-- conflict policies: `rename`, `skip`, `overwrite`
-- move or copy per rule
-- structured logging
-- unit tests for matcher, stability, and routing behavior
-
-## Install
+## Install from source
 
 ```powershell
-py -3.11 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-pip install -e .[dev]
+git clone https://github.com/BigTrickGeekin/droproute.git
+Set-Location .\droproute
+.\scripts\bootstrap.ps1
 ```
 
-## Quick start
+The bootstrap script creates `.venv`, installs DropRoute and its development checks, and creates
+`config.json` from the example when needed.
 
-1. Copy the sample config:
+## Configure
 
-```powershell
-Copy-Item .\config.example.json .\config.json
-```
-
-2. Edit `config.json`.
-
-3. Run validation:
-
-```powershell
-droproute validate --config .\config.json
-```
-
-4. Start the watcher:
-
-```powershell
-droproute run --config .\config.json
-```
-
-## Example config
+Edit `config.json`:
 
 ```json
 {
-  "watch_paths": [
-    "C:/Users/User/Downloads"
-  ],
+  "watch_paths": ["%USERPROFILE%/Downloads"],
   "poll_interval_seconds": 1.0,
   "stability_window_seconds": 3.0,
+  "max_wait_seconds": 300.0,
+  "process_existing_on_startup": true,
+  "worker_count": 4,
   "log_level": "INFO",
   "rules": [
     {
       "name": "CNC posts",
       "enabled": true,
       "priority": 10,
-      "extensions": [".tap", ".nc"],
+      "extensions": ["tap", "nc"],
       "name_contains": [],
       "destination": "C:/TEN10/CNC/Posts",
       "action": "move",
@@ -90,43 +67,72 @@ droproute run --config .\config.json
       "name": "Invoices",
       "enabled": true,
       "priority": 20,
-      "extensions": [".pdf"],
-      "name_contains": ["invoice", "receipt"],
-      "destination": "C:/TEN10/Docs/Invoices",
-      "action": "move",
+      "extensions": ["pdf"],
+      "name_contains": ["invoice"],
+      "destination": "sorted/invoices",
+      "action": "copy",
       "on_conflict": "rename"
     }
   ]
 }
 ```
 
-## CLI
+Relative watch and destination paths are resolved from the folder containing `config.json`, not
+from the current terminal directory. Rule names must be unique. A rule destination cannot be the
+same folder it watches.
+
+All entries in `name_contains` must occur in the filename. Leave both `extensions` and
+`name_contains` empty only when an intentional catch-all rule is needed.
+
+## Run
+
+Validate before starting the watcher:
 
 ```powershell
 droproute validate --config .\config.json
 droproute run --config .\config.json
-droproute route-once --config .\config.json --file C:\Users\User\Downloads\example.tap
 ```
 
-## Windows packaging later
-
-When you are ready to ship an `.exe`, package the CLI or a thin GUI shell around it with PyInstaller or Briefcase. The core routing engine should remain unchanged.
-
-## Repo bootstrap
-
-This connector cannot create a new GitHub repo directly, but the scaffold is ready to push.
+Route one file for setup verification:
 
 ```powershell
-gh repo create BigTrickGeekin/droproute --public --source . --remote origin --push
+droproute route-once --config .\config.json --file "$env:USERPROFILE\Downloads\example.tap"
 ```
 
-Or if you already created the repo manually:
+Runtime logs are written to `runtime/droproute.log` beside the selected config file. Stop the
+watcher with `Ctrl+C`.
+
+Exit codes are `0` for a successful command or unmatched file, `1` when a requested file cannot
+be routed, and `2` for configuration or command errors.
+
+## Build the Windows executable
 
 ```powershell
-git init
-git branch -M main
-git add .
-git commit -m "Initial DropRoute scaffold"
-git remote add origin https://github.com/BigTrickGeekin/droproute.git
-git push -u origin main
+.\scripts\build_windows.ps1
 ```
+
+The executable is written to `dist\DropRoute.exe`. GitHub Actions can build the same artifact using
+the **Windows executable** workflow.
+
+## Quality gate
+
+```powershell
+ruff format --check src tests
+ruff check .
+mypy
+pytest --cov=droproute --cov-report=term-missing
+```
+
+CI enforces formatting, linting, strict type checks, the full test suite, and at least 85% combined
+branch/line coverage.
+
+## Known MVP limits
+
+- watch folders are intentionally non-recursive
+- configuration changes require a restart
+- the executable is console-based
+- network shares and locked files depend on Windows/filesystem behavior
+
+## License
+
+MIT. See `LICENSE`.

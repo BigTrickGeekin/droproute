@@ -19,6 +19,9 @@ optional-dependencies.dev = [
   "ruff>=0.6.0",
   "mypy>=1.11.0",
 ]
+optional-dependencies.build = [
+  "pyinstaller>=6.0.0",
+]
 
 [project.scripts]
 droproute = "droproute.cli:main"
@@ -37,7 +40,7 @@ target-version = "py311"
 select = ["E", "F", "I", "UP", "B", "SIM"]
 
 [tool.pytest.ini_options]
-addopts = "-q"
+addopts = "-q --strict-markers --strict-config"
 testpaths = ["tests"]
 
 [tool.mypy]
@@ -48,3 +51,12 @@ warn_redundant_casts = true
 warn_return_any = true
 warn_unreachable = true
 packages = ["droproute"]
+
+[tool.coverage.run]
+branch = true
+source = ["droproute"]
+
+[tool.coverage.report]
+fail_under = 85
+show_missing = true
+skip_covered = true
